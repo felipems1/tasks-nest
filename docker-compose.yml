@@ -1,0 +1,12 @@
+version: '3.8'
+
+services:
+  postgres:
+    image: postgres:latest
+    container_name: tasks-nest
+    ports:
+      - "7000:5432"
+    environment:
+      POSTGRES_DB: tasks-nest
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: password
