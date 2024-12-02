@@ -7,28 +7,28 @@ import { Repository } from 'typeorm';
 
 @Injectable()
 export class UserService {
+  private readonly saltRounds = 10;
+
   constructor(
     @InjectRepository(UserEntity)
     private readonly userRepository: Repository<UserEntity>,
   ) {}
 
-  async create(user: UserDto) {
+  async create(user: UserDto): Promise<Partial<UserDto>> {
     const userAlreadyRegistered = await this.findByUserName(user.username);
 
     if (userAlreadyRegistered) {
-      throw new ConflictException(`User '${user.username}' already registered`);
+      throw new ConflictException(
+        `User '${user.username}' is already registered.`,
+      );
     }
 
-    const dbUser = new UserEntity();
-    dbUser.username = user.username;
-    dbUser.passwordHash = hashSync(user.password, 10);
+    const hashedPassword = hashSync(user.password, this.saltRounds);
+    const dbUser = this.mapDtoToEntity(user, hashedPassword);
 
-    const { id, username } = await this.userRepository.save(dbUser);
+    const savedUser = await this.userRepository.save(dbUser);
 
-    return {
-      id,
-      username,
-    };
+    return this.mapEntityToPartialDto(savedUser);
   }
 
   async findByUserName(username: string): Promise<UserDto | null> {
@@ -40,10 +40,29 @@ export class UserService {
       return null;
     }
 
+    return this.mapEntityToDto(userFound);
+  }
+
+  private mapDtoToEntity(userDto: UserDto, hashedPassword: string): UserEntity {
     return {
-      id: userFound.id,
-      password: userFound.passwordHash,
-      username: userFound.username,
+      id: userDto.id,
+      username: userDto.username,
+      passwordHash: hashedPassword,
+    };
+  }
+
+  private mapEntityToDto(userEntity: UserEntity): UserDto {
+    return {
+      id: userEntity.id,
+      username: userEntity.username,
+      password: userEntity.passwordHash,
+    };
+  }
+
+  private mapEntityToPartialDto(userEntity: UserEntity): Partial<UserDto> {
+    return {
+      id: userEntity.id,
+      username: userEntity.username,
     };
   }
 }

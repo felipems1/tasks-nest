@@ -12,15 +12,10 @@ export class TaskService {
   ) {}
 
   async create(task: TaskDto): Promise<TaskDto> {
-    const taskToSave: TaskEntity = {
-      title: task.title,
-      description: task.description,
-      expirationDate: task.expirationDate,
-      status: TaskStatusEnum.TO_DO,
-    };
+    const taskToSave: TaskEntity = this.mapDtoToEntity(task);
+    taskToSave.status = TaskStatusEnum.TO_DO; // Default status
 
     const createdTask = await this.taskRepository.save(taskToSave);
-
     return this.mapEntityToDto(createdTask);
   }
 
@@ -29,7 +24,7 @@ export class TaskService {
 
     if (!foundTask) {
       throw new HttpException(
-        `Task with id ${id} not found`,
+        `Task with ID '${id}' not found.`,
         HttpStatus.NOT_FOUND,
       );
     }
@@ -48,33 +43,33 @@ export class TaskService {
       searchParams.status = Like(`%${params.status}%`);
     }
 
-    const tasksFound = await this.taskRepository.find({
-      where: searchParams,
-    });
-
-    return tasksFound.map((taskEntity) => this.mapEntityToDto(taskEntity));
+    const tasksFound = await this.taskRepository.find({ where: searchParams });
+    return tasksFound.map((task) => this.mapEntityToDto(task));
   }
 
-  async update(id: string, task: TaskDto) {
+  async update(id: string, task: TaskDto): Promise<TaskDto> {
     const foundTask = await this.taskRepository.findOne({ where: { id } });
 
     if (!foundTask) {
       throw new HttpException(
-        `Task with id ${task.id} not found`,
-        HttpStatus.BAD_REQUEST,
+        `Task with ID '${id}' not found.`,
+        HttpStatus.NOT_FOUND,
       );
     }
 
-    await this.taskRepository.update(id, this.mapDtoToEntity(task));
+    const updatedTask = Object.assign(foundTask, this.mapDtoToEntity(task));
+    const savedTask = await this.taskRepository.save(updatedTask);
+
+    return this.mapEntityToDto(savedTask);
   }
 
-  async remove(id: string) {
+  async remove(id: string): Promise<void> {
     const result = await this.taskRepository.delete(id);
 
-    if (!result) {
+    if (result.affected === 0) {
       throw new HttpException(
-        `Task with id ${id} not found`,
-        HttpStatus.BAD_REQUEST,
+        `Task with ID '${id}' not found.`,
+        HttpStatus.NOT_FOUND,
       );
     }
   }
@@ -85,16 +80,16 @@ export class TaskService {
       title: taskEntity.title,
       description: taskEntity.description,
       expirationDate: taskEntity.expirationDate,
-      status: TaskStatusEnum[taskEntity.status],
+      status: taskEntity.status,
     };
   }
 
-  private mapDtoToEntity(taskDto: TaskDto): Partial<TaskEntity> {
+  private mapDtoToEntity(taskDto: TaskDto): TaskEntity {
     return {
-      title: taskDto.description,
+      title: taskDto.title,
       description: taskDto.description,
       expirationDate: taskDto.expirationDate,
-      status: taskDto.status.toString(),
+      status: taskDto.status,
     };
   }
 }
