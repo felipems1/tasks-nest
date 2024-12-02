@@ -12,6 +12,7 @@ Este projeto é uma API de lista de tarefas que permite a criação, edição, a
 * NestJS
 * TypeORM
 * PostgreSQL
+* Docker
 
 ## Passos para Instalação
 
@@ -43,6 +44,9 @@ Este projeto é uma API de lista de tarefas que permite a criação, edição, a
 * Ver todas as tarefas
 * Buscar uma tarefa por ID
 
+## Configurações Necessárias
+
+Crie um arquivo `.env` baseado no arquivo `.env.example` fornecido.  Este arquivo conterá as configurações de conexão com o banco de dados e outras variáveis de ambiente.
 
 ## Licença
 
@@ -51,7 +55,3 @@ MIT
 ## Contato
 
 [Meu LinkedIn](https://www.linkedin.com/in/felipems1/)
-
-## Configurações Necessárias
-
-Crie um arquivo `.env` baseado no arquivo `.env.example` fornecido.  Este arquivo conterá as configurações de conexão com o banco de dados e outras variáveis de ambiente.
